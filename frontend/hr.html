@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ERP System - Personal</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <nav class="nav">
+    <div class="nav-container">
+      <a href="index.html" class="nav-logo">ERP System</a>
+      <ul class="nav-links">
+        <li><a href="inventory.html">Inventar</a></li>
+        <li><a href="hr.html" class="active">Personal</a></li>
+        <li><a href="sales.html">Vertrieb</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <main class="container">
+    <div class="page-header">
+      <h1>Personalverwaltung</h1>
+      <p>Verwalten Sie Mitarbeiter und Arbeitszeiten</p>
+    </div>
+
+    <div id="alertContainer"></div>
+
+    <!-- Add Employee Form -->
+    <div class="card">
+      <h2 class="card-header">Neuen Mitarbeiter hinzufuegen</h2>
+      <form id="employeeForm">
+        <div class="form-row">
+          <div class="form-group">
+            <label for="employeeName">Name</label>
+            <input type="text" id="employeeName" name="name" required>
+          </div>
+          <div class="form-group">
+            <label for="employeePosition">Position</label>
+            <input type="text" id="employeePosition" name="position" required>
+          </div>
+          <div class="form-group">
+            <label for="employeeEmail">E-Mail</label>
+            <input type="email" id="employeeEmail" name="email" required>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="employeeStartDate">Startdatum</label>
+            <input type="date" id="employeeStartDate" name="start_date" required>
+          </div>
+          <div class="form-group">
+            <label for="employeeSalary">Monatsgehalt (EUR)</label>
+            <input type="number" id="employeeSalary" name="monthly_salary" min="0" step="0.01" required>
+          </div>
+        </div>
+        <button type="submit" class="btn btn-primary">Mitarbeiter hinzufuegen</button>
+      </form>
+    </div>
+
+    <!-- Employee List -->
+    <div class="card">
+      <h2 class="card-header">Mitarbeiterliste</h2>
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Name</th>
+              <th>Position</th>
+              <th>E-Mail</th>
+              <th>Startdatum</th>
+              <th>Monatsgehalt</th>
+              <th>Aktionen</th>
+            </tr>
+          </thead>
+          <tbody id="employeeTableBody">
+            <tr>
+              <td colspan="7">Lade Mitarbeiter...</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Work Hours Section (shown when employee selected) -->
+    <div id="workHoursSection" class="card" style="display: none;">
+      <h2 class="card-header">Arbeitsstunden fuer <span id="selectedEmployeeName"></span></h2>
+
+      <!-- Salary Display -->
+      <div id="salaryDisplay" class="salary-info">
+        <p><strong>Berechnetes Gehalt:</strong> <span id="calculatedSalary">-</span> EUR</p>
+        <p><small>Basierend auf <span id="hoursLogged">0</span> Stunden im aktuellen Monat (Formel: Stunden/160 * Monatsgehalt)</small></p>
+      </div>
+
+      <!-- Add Work Hours Form -->
+      <form id="workHoursForm" class="work-hours-form">
+        <div class="form-row">
+          <div class="form-group">
+            <label for="workDate">Datum</label>
+            <input type="date" id="workDate" name="date" required>
+          </div>
+          <div class="form-group">
+            <label for="workHours">Stunden</label>
+            <input type="number" id="workHours" name="hours" min="0" max="24" step="0.5" required>
+          </div>
+          <div class="form-group" style="display: flex; align-items: flex-end;">
+            <button type="submit" class="btn btn-primary">Stunden hinzufuegen</button>
+          </div>
+        </div>
+      </form>
+
+      <!-- Work Hours List -->
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th>Datum</th>
+              <th>Stunden</th>
+              <th>Aktionen</th>
+            </tr>
+          </thead>
+          <tbody id="workHoursTableBody">
+            <tr>
+              <td colspan="3">Keine Arbeitsstunden erfasst</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+
+  <script src="js/api.js"></script>
+  <script src="js/hr.js"></script>
+</body>
+</html>

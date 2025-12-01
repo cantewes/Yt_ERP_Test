@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ERP System - Vertrieb</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <nav class="nav">
+    <div class="nav-container">
+      <a href="index.html" class="nav-logo">ERP System</a>
+      <ul class="nav-links">
+        <li><a href="inventory.html">Inventar</a></li>
+        <li><a href="hr.html">Personal</a></li>
+        <li><a href="sales.html" class="active">Vertrieb</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <main class="container">
+    <div class="page-header">
+      <h1>Vertriebsverwaltung</h1>
+      <p>Verwalten Sie Kunden und Bestellungen</p>
+    </div>
+
+    <div id="alertContainer"></div>
+
+    <!-- Add Customer Form -->
+    <div class="card">
+      <h2 class="card-header">Neuen Kunden hinzufuegen</h2>
+      <form id="customerForm">
+        <div class="form-row">
+          <div class="form-group">
+            <label for="customerName">Name</label>
+            <input type="text" id="customerName" name="name" required>
+          </div>
+          <div class="form-group">
+            <label for="customerEmail">E-Mail</label>
+            <input type="email" id="customerEmail" name="email" required>
+          </div>
+          <div class="form-group">
+            <label for="customerPhone">Telefon</label>
+            <input type="tel" id="customerPhone" name="phone">
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="customerAddress">Adresse</label>
+          <input type="text" id="customerAddress" name="address">
+        </div>
+        <button type="submit" class="btn btn-primary">Kunde hinzufuegen</button>
+      </form>
+    </div>
+
+    <!-- Customer List -->
+    <div class="card">
+      <h2 class="card-header">Kundenliste</h2>
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Name</th>
+              <th>E-Mail</th>
+              <th>Telefon</th>
+              <th>Adresse</th>
+              <th>Aktionen</th>
+            </tr>
+          </thead>
+          <tbody id="customerTableBody">
+            <tr>
+              <td colspan="6">Lade Kunden...</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Create Order Form -->
+    <div class="card">
+      <h2 class="card-header">Neue Bestellung erstellen</h2>
+      <form id="orderForm">
+        <div class="form-row">
+          <div class="form-group">
+            <label for="orderCustomer">Kunde</label>
+            <select id="orderCustomer" name="customer_id" required>
+              <option value="">-- Kunde auswaehlen --</option>
+            </select>
+          </div>
+        </div>
+
+        <div id="orderItemsContainer">
+          <h3>Bestellpositionen</h3>
+          <div class="order-item-row" data-index="0">
+            <div class="form-row">
+              <div class="form-group">
+                <label>Produkt</label>
+                <select name="product_id" class="product-select" required>
+                  <option value="">-- Produkt auswaehlen --</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>Menge</label>
+                <input type="number" name="quantity" min="1" value="1" class="quantity-input" required>
+              </div>
+              <div class="form-group" style="display: flex; align-items: flex-end;">
+                <button type="button" class="btn btn-danger btn-small remove-item-btn" style="display: none;">Entfernen</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div style="margin-top: var(--spacing-md);">
+          <button type="button" id="addItemBtn" class="btn btn-secondary">+ Position hinzufuegen</button>
+        </div>
+
+        <div style="margin-top: var(--spacing-lg);">
+          <button type="submit" class="btn btn-primary">Bestellung erstellen</button>
+        </div>
+      </form>
+    </div>
+
+    <!-- Orders List -->
+    <div class="card">
+      <h2 class="card-header">Bestellungen</h2>
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Kunde</th>
+              <th>Datum</th>
+              <th>Status</th>
+              <th>Positionen</th>
+              <th>Aktionen</th>
+            </tr>
+          </thead>
+          <tbody id="orderTableBody">
+            <tr>
+              <td colspan="6">Lade Bestellungen...</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+
+  <script src="js/api.js"></script>
+  <script src="js/sales.js"></script>
+</body>
+</html>
