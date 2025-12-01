@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ERP System - Analytics</title>
+  <link rel="stylesheet" href="css/style.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+</head>
+<body>
+  <nav class="nav">
+    <div class="nav-container">
+      <a href="index.html" class="nav-logo">ERP System</a>
+      <ul class="nav-links">
+        <li><a href="inventory.html">Inventar</a></li>
+        <li><a href="hr.html">Personal</a></li>
+        <li><a href="sales.html">Vertrieb</a></li>
+        <li><a href="analytics.html" class="active">Analytics</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <main class="container">
+    <div class="page-header">
+      <h1>Analytics Dashboard</h1>
+      <p>Uebersicht ueber alle Geschaeftskennzahlen</p>
+    </div>
+
+    <div id="errorContainer"></div>
+
+    <!-- Filter Section -->
+    <section class="filter-section card">
+      <div class="filter-row">
+        <div class="filter-group">
+          <label for="startDate">Startdatum:</label>
+          <input type="date" id="startDate" value="2025-01-01">
+        </div>
+        <div class="filter-group">
+          <label for="endDate">Enddatum:</label>
+          <input type="date" id="endDate" value="2025-12-31">
+        </div>
+        <div class="filter-buttons">
+          <button id="applyFilter" class="btn btn-primary">Filter anwenden</button>
+          <button id="resetFilter" class="btn btn-secondary">Zuruecksetzen</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- KPI Cards -->
+    <section class="kpi-grid">
+      <div class="kpi-card inventory">
+        <h3 class="kpi-title">Inventar</h3>
+        <p class="kpi-value" id="kpiTotalProducts">--</p>
+        <p class="kpi-label">Produkte gesamt</p>
+        <p class="kpi-sub"><span id="kpiLowStock">--</span> mit niedrigem Bestand</p>
+      </div>
+      <div class="kpi-card hr">
+        <h3 class="kpi-title">Personal</h3>
+        <p class="kpi-value" id="kpiTotalEmployees">--</p>
+        <p class="kpi-label">Mitarbeiter</p>
+        <p class="kpi-sub"><span id="kpiFullPaidPct">--</span>% voll bezahlt</p>
+      </div>
+      <div class="kpi-card sales">
+        <h3 class="kpi-title">Vertrieb</h3>
+        <p class="kpi-value" id="kpiTotalOrders">--</p>
+        <p class="kpi-label">Bestellungen</p>
+        <p class="kpi-sub"><span id="kpiTotalItems">--</span> Artikel verkauft</p>
+      </div>
+    </section>
+
+    <!-- Charts Row 1 -->
+    <section class="charts-grid">
+      <div class="chart-container card">
+        <h3 class="card-header">Inventar nach Kategorie</h3>
+        <div class="chart-wrapper">
+          <canvas id="chartInventoryCategory"></canvas>
+        </div>
+      </div>
+      <div class="chart-container card">
+        <h3 class="card-header">Gehaltsabrechnung</h3>
+        <div class="chart-wrapper">
+          <canvas id="chartPayroll"></canvas>
+        </div>
+      </div>
+    </section>
+
+    <!-- Charts Row 2 -->
+    <section class="charts-grid">
+      <div class="chart-container card">
+        <h3 class="card-header">Verkaufstrend</h3>
+        <div class="chart-wrapper">
+          <canvas id="chartSalesTrend"></canvas>
+        </div>
+      </div>
+      <div class="chart-container card">
+        <h3 class="card-header">Top Kunden</h3>
+        <div class="chart-wrapper">
+          <canvas id="chartTopCustomers"></canvas>
+        </div>
+      </div>
+    </section>
+
+    <!-- Data Tables -->
+    <section class="tables-grid">
+      <div class="card">
+        <h3 class="card-header">Produkte mit niedrigem Bestand</h3>
+        <div class="table-container">
+          <table>
+            <thead>
+              <tr>
+                <th>Produkt</th>
+                <th>Kategorie</th>
+                <th>Bestand</th>
+              </tr>
+            </thead>
+            <tbody id="lowStockTableBody">
+              <tr><td colspan="3">Lade Daten...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="card">
+        <h3 class="card-header">Mitarbeiter unter 160 Stunden</h3>
+        <div class="table-container">
+          <table>
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Stunden</th>
+                <th>Gehalt</th>
+                <th>%</th>
+              </tr>
+            </thead>
+            <tbody id="underThresholdTableBody">
+              <tr><td colspan="4">Lade Daten...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- Drill-Down Detail Section -->
+    <section id="drillDownSection" class="drill-down-section card" style="display: none;">
+      <div class="drill-down-header">
+        <h3 id="drillDownTitle">Details</h3>
+        <button id="closeDrillDown" class="btn btn-secondary btn-small">Schliessen</button>
+      </div>
+      <div class="table-container">
+        <table>
+          <thead id="drillDownTableHead">
+          </thead>
+          <tbody id="drillDownTableBody">
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- Export Section -->
+    <section class="export-section card">
+      <h3 class="card-header">Daten exportieren</h3>
+      <p class="export-hint">Exportieren Sie die aktuellen Daten als CSV-Datei</p>
+      <div class="export-buttons">
+        <button id="exportInventoryCSV" class="btn btn-secondary">Inventar CSV</button>
+        <button id="exportPayrollCSV" class="btn btn-secondary">Gehalt CSV</button>
+        <button id="exportSalesCSV" class="btn btn-secondary">Vertrieb CSV</button>
+      </div>
+    </section>
+
+    <!-- Chart Interaction Hint -->
+    <div class="chart-hint">
+      <p>Tipp: Klicken Sie auf Chart-Elemente fuer Detail-Ansicht</p>
+    </div>
+  </main>
+
+  <script src="js/api.js"></script>
+  <script src="js/analytics.js"></script>
+</body>
+</html>

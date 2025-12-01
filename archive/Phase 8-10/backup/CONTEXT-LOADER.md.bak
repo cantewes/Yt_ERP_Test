@@ -1,0 +1,95 @@
+# Context Loader Guide
+
+Dieser Leitfaden definiert, welche Dateien die KI fuer jede Phase laden sollte.
+
+---
+
+## Phase 8: Analytics Backend API
+
+### Primaere Dateien (MUSS laden)
+```
+contexts/phases 8-10/Phase-8-spec.md    # API-Spezifikation
+contexts/master-context.md              # DB-Schema (Zeile 57-114)
+backend/routes/inventory.js             # Template fuer neue Routes
+```
+
+### Sekundaere Dateien (bei Bedarf)
+```
+backend/db.js                           # DB-Connection Pattern
+contexts/project-status.md              # Aktueller Status
+```
+
+### NICHT laden
+- archive/* (historisch)
+- Phase-9-spec.md, Phase-10-spec.md (noch nicht relevant)
+
+---
+
+## Phase 9: Analytics Frontend UI
+
+### Primaere Dateien (MUSS laden)
+```
+contexts/phases 8-10/Phase-9-spec.md    # UI-Spezifikation
+frontend/js/api.js                      # API-Wrapper
+frontend/css/style.css                  # Design-Tokens
+```
+
+### Sekundaere Dateien (bei Bedarf)
+```
+contexts/master-context.md              # UI/UX Specs (Zeile 348-395)
+backend/routes/analytics.js             # Phase 8 API (fuer Endpoints)
+```
+
+---
+
+## Phase 10: Interactivity & Export
+
+### Primaere Dateien (MUSS laden)
+```
+contexts/phases 8-10/Phase-10-spec.md   # Feature-Spezifikation
+frontend/js/analytics.js                # Phase 9 Code
+```
+
+### Sekundaere Dateien (bei Bedarf)
+```
+backend/routes/analytics.js             # Export-Endpoints
+```
+
+---
+
+## Allgemeine Referenzen
+
+### Database Schema (master-context.md Zeile 57-114)
+- products: id, name, category, quantity
+- employees: id, name, position, email, start_date, monthly_salary
+- work_hours: id, employee_id, date, hours
+- customers: id, name, email, phone, address
+- orders: id, customer_id, order_date, status
+- order_items: id, order_id, product_id, quantity
+
+### Folder Structure (master-context.md Zeile 117-150)
+```
+backend/
+  server.js, db.js, package.json
+  routes/ (inventory.js, hr.js, sales.js, analytics.js)
+frontend/
+  *.html, css/style.css, js/*.js
+contexts/
+  master-context.md, project-status.md, CONTEXT-LOADER.md
+  phases 8-10/ (Phase-8/9/10-spec.md)
+archive/
+  Phase1-7/ (historische Dokumentation)
+```
+
+---
+
+## Kontext-Optimierung
+
+| Situation | Empfehlung |
+|-----------|------------|
+| Neues Feature | Nur relevante Spec + Template-Code laden |
+| Bug Fix | Betroffene Datei + Tests laden |
+| Refactoring | master-context.md fuer Architektur |
+| QA Review | project-status.md + relevante Spec |
+
+**Ziel**: Fokussierter Kontext (~500 Zeilen) statt vollstaendiger Dump (~3000+ Zeilen)
