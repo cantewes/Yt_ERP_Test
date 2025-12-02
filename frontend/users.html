@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ERP System - Benutzerverwaltung</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <nav class="nav">
+    <div class="nav-container">
+      <a href="index.html" class="nav-logo">ERP System</a>
+      <ul class="nav-links">
+        <li><a href="inventory.html">Inventar</a></li>
+        <li><a href="hr.html">Personal</a></li>
+        <li><a href="sales.html">Vertrieb</a></li>
+        <li><a href="procurement.html">Beschaffung</a></li>
+        <li><a href="analytics.html">Analytics</a></li>
+        <li><a href="accounting.html">Buchhaltung</a></li>
+        <li><a href="users.html" class="active">Benutzer</a></li>
+      </ul>
+      <div class="nav-user">
+        <span id="current-username"></span>
+        <span id="current-role" class="role-badge"></span>
+        <button id="logout-btn" class="btn btn-small">Abmelden</button>
+      </div>
+    </div>
+  </nav>
+
+  <main class="container">
+    <div class="page-header">
+      <h1>Benutzerverwaltung</h1>
+      <p>Verwalten Sie Benutzerkonten und Berechtigungen</p>
+    </div>
+
+    <div id="alert-container"></div>
+
+    <div class="card">
+      <div class="card-header-row">
+        <h2>Benutzer</h2>
+        <button id="create-user-btn" class="btn btn-primary">Neuer Benutzer</button>
+      </div>
+
+      <div class="filter-row">
+        <select id="status-filter">
+          <option value="">Alle Status</option>
+          <option value="active">Aktiv</option>
+          <option value="suspended">Gesperrt</option>
+          <option value="locked">Gesperrt (Login)</option>
+        </select>
+        <select id="role-filter">
+          <option value="">Alle Rollen</option>
+          <option value="admin">Admin</option>
+          <option value="manager">Manager</option>
+          <option value="viewer">Viewer</option>
+        </select>
+      </div>
+
+      <div class="table-container">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Benutzername</th>
+              <th>E-Mail</th>
+              <th>Rolle</th>
+              <th>Status</th>
+              <th>Letzter Login</th>
+              <th>Aktionen</th>
+            </tr>
+          </thead>
+          <tbody id="users-table">
+            <tr><td colspan="7" class="loading">Laden...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Audit-Protokoll</h2>
+      <div class="table-container">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Datum</th>
+              <th>Benutzer</th>
+              <th>Aktion</th>
+              <th>Ressource</th>
+              <th>Ergebnis</th>
+              <th>IP-Adresse</th>
+            </tr>
+          </thead>
+          <tbody id="audit-table">
+            <tr><td colspan="6" class="loading">Laden...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+
+  <!-- Create/Edit User Modal -->
+  <div id="user-modal" class="modal hidden">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 id="modal-title">Neuer Benutzer</h3>
+        <button class="modal-close">&times;</button>
+      </div>
+      <form id="user-form">
+        <input type="hidden" id="user-id">
+        <div class="form-group">
+          <label for="username">Benutzername</label>
+          <input type="text" id="username" required pattern="[a-zA-Z0-9_]{3,32}">
+          <small>3-32 Zeichen, nur Buchstaben, Zahlen und Unterstrich</small>
+        </div>
+        <div class="form-group">
+          <label for="email">E-Mail</label>
+          <input type="email" id="email" required>
+        </div>
+        <div class="form-group" id="password-group">
+          <label for="password">Passwort</label>
+          <input type="password" id="password">
+          <small>Mind. 8 Zeichen, Gross-/Kleinbuchstaben, Zahl, Sonderzeichen</small>
+        </div>
+        <div class="form-group">
+          <label for="role">Rolle</label>
+          <select id="role" required>
+            <option value="viewer">Viewer</option>
+            <option value="manager">Manager</option>
+            <option value="admin">Admin</option>
+          </select>
+        </div>
+        <div class="form-group" id="status-group" style="display:none;">
+          <label for="status">Status</label>
+          <select id="status">
+            <option value="active">Aktiv</option>
+            <option value="suspended">Gesperrt</option>
+          </select>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn modal-close">Abbrechen</button>
+          <button type="submit" class="btn btn-primary">Speichern</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Reset Password Modal -->
+  <div id="reset-modal" class="modal hidden">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>Passwort zuruecksetzen</h3>
+        <button class="modal-close">&times;</button>
+      </div>
+      <form id="reset-form">
+        <input type="hidden" id="reset-user-id">
+        <p id="reset-user-info"></p>
+        <div class="form-group">
+          <label for="new-password">Neues Passwort</label>
+          <input type="password" id="new-password" required>
+          <small>Mind. 8 Zeichen, Gross-/Kleinbuchstaben, Zahl, Sonderzeichen</small>
+        </div>
+        <div class="form-group">
+          <label for="confirm-password">Passwort bestaetigen</label>
+          <input type="password" id="confirm-password" required>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn modal-close">Abbrechen</button>
+          <button type="submit" class="btn btn-primary">Zuruecksetzen</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="js/auth.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/users.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', async () => {
+      if (!requireAuth()) return;
+      await auth.fetchCurrentUser();
+
+      // Only admins can access this page
+      const user = auth.getUser();
+      if (!user || user.role !== 'admin') {
+        window.location.href = '/index.html';
+        return;
+      }
+
+      updateUIForRole();
+      setupLogoutButton();
+    });
+  </script>
+</body>
+</html>

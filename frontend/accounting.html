@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ERP System - Buchhaltung</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <nav class="nav">
+    <div class="nav-container">
+      <a href="index.html" class="nav-logo">ERP System</a>
+      <ul class="nav-links">
+        <li><a href="inventory.html">Inventar</a></li>
+        <li><a href="hr.html">Personal</a></li>
+        <li><a href="sales.html">Vertrieb</a></li>
+        <li><a href="procurement.html">Beschaffung</a></li>
+        <li><a href="analytics.html">Analytics</a></li>
+        <li><a href="accounting.html" class="active">Buchhaltung</a></li>
+      </ul>
+      <div class="nav-user">
+        <span id="current-username"></span>
+        <span id="current-role" class="role-badge"></span>
+        <button id="logout-btn" class="btn btn-small">Abmelden</button>
+      </div>
+    </div>
+  </nav>
+
+  <main class="container">
+    <h1>Buchhaltung</h1>
+
+    <div id="alert-container"></div>
+
+    <!-- Financial Summary -->
+    <section class="summary-section">
+      <h2>Finanzuebersicht</h2>
+      <div class="summary-cards" id="summary-cards">
+        <div class="summary-card">
+          <h3>Gesamt fakturiert</h3>
+          <p class="summary-value" id="total-invoiced">--</p>
+        </div>
+        <div class="summary-card">
+          <h3>Bezahlt</h3>
+          <p class="summary-value success" id="total-paid">--</p>
+        </div>
+        <div class="summary-card">
+          <h3>Ausstehend</h3>
+          <p class="summary-value warning" id="outstanding">--</p>
+        </div>
+        <div class="summary-card">
+          <h3>Ueberfaellig</h3>
+          <p class="summary-value danger" id="overdue">--</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Invoice Actions -->
+    <section class="actions-section" data-role="admin,manager">
+      <button class="btn btn-primary" id="create-invoice-btn">Rechnung erstellen</button>
+    </section>
+
+    <!-- Invoices Table -->
+    <section class="table-section">
+      <h2>Rechnungen</h2>
+      <div class="table-filters">
+        <select id="status-filter">
+          <option value="">Alle Status</option>
+          <option value="draft">Entwurf</option>
+          <option value="sent">Gesendet</option>
+          <option value="paid">Bezahlt</option>
+          <option value="overdue">Ueberfaellig</option>
+          <option value="cancelled">Storniert</option>
+        </select>
+      </div>
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Rechnungsnr.</th>
+            <th>Kunde</th>
+            <th>Datum</th>
+            <th>Faellig</th>
+            <th>Betrag</th>
+            <th>Bezahlt</th>
+            <th>Status</th>
+            <th>Aktionen</th>
+          </tr>
+        </thead>
+        <tbody id="invoices-table">
+          <tr><td colspan="8" class="loading">Laden...</td></tr>
+        </tbody>
+      </table>
+      <div class="pagination" id="pagination">
+        <button class="btn btn-small" id="prev-page" disabled>Zurueck</button>
+        <span id="page-info">Seite 1</span>
+        <button class="btn btn-small" id="next-page">Weiter</button>
+      </div>
+    </section>
+
+    <!-- Create Invoice Modal -->
+    <div id="invoice-modal" class="modal hidden">
+      <div class="modal-content">
+        <span class="modal-close">&times;</span>
+        <h2>Neue Rechnung</h2>
+        <form id="invoice-form">
+          <div class="form-group">
+            <label for="order-id">Bestellung</label>
+            <select id="order-id" required>
+              <option value="">Bestellung waehlen...</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="due-date">Faelligkeitsdatum</label>
+            <input type="date" id="due-date" required>
+          </div>
+          <div class="form-group">
+            <label for="invoice-notes">Notizen</label>
+            <textarea id="invoice-notes" rows="3"></textarea>
+          </div>
+          <button type="submit" class="btn btn-primary">Rechnung erstellen</button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Payment Modal -->
+    <div id="payment-modal" class="modal hidden">
+      <div class="modal-content">
+        <span class="modal-close">&times;</span>
+        <h2>Zahlung erfassen</h2>
+        <form id="payment-form">
+          <input type="hidden" id="payment-invoice-id">
+          <div class="form-group">
+            <label>Rechnungsbetrag: <span id="invoice-total"></span></label>
+            <label>Bereits bezahlt: <span id="invoice-paid"></span></label>
+            <label>Offen: <span id="invoice-remaining"></span></label>
+          </div>
+          <div class="form-group">
+            <label for="payment-amount">Zahlungsbetrag</label>
+            <input type="number" id="payment-amount" step="0.01" min="0.01" required>
+          </div>
+          <div class="form-group">
+            <label for="payment-method">Zahlungsart</label>
+            <select id="payment-method">
+              <option value="bank_transfer">Ueberweisung</option>
+              <option value="cash">Bar</option>
+              <option value="credit_card">Kreditkarte</option>
+              <option value="paypal">PayPal</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="payment-reference">Referenz</label>
+            <input type="text" id="payment-reference" placeholder="z.B. Transaktions-ID">
+          </div>
+          <button type="submit" class="btn btn-primary">Zahlung erfassen</button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Invoice Detail Modal -->
+    <div id="detail-modal" class="modal hidden">
+      <div class="modal-content modal-large">
+        <span class="modal-close">&times;</span>
+        <h2>Rechnungsdetails</h2>
+        <div id="invoice-detail"></div>
+        <div class="modal-footer">
+          <button class="btn btn-primary" onclick="printInvoice()">PDF / Drucken</button>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script src="js/auth.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/accounting.js"></script>
+</body>
+</html>

@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ERP System - Beschaffung</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <nav class="nav">
+    <div class="nav-container">
+      <a href="index.html" class="nav-logo">ERP System</a>
+      <ul class="nav-links">
+        <li><a href="inventory.html">Inventar</a></li>
+        <li><a href="hr.html">Personal</a></li>
+        <li><a href="sales.html">Vertrieb</a></li>
+        <li><a href="procurement.html" class="active">Beschaffung</a></li>
+        <li><a href="analytics.html">Analytics</a></li>
+        <li><a href="accounting.html">Buchhaltung</a></li>
+      </ul>
+      <div class="nav-user">
+        <span id="current-username"></span>
+        <span id="current-role" class="role-badge"></span>
+        <button id="logout-btn" class="btn btn-small">Abmelden</button>
+      </div>
+    </div>
+  </nav>
+
+  <main class="container">
+    <div class="page-header">
+      <h1>Beschaffungsmanagement</h1>
+      <p>Verwalten Sie Lieferanten und Bestellungen</p>
+    </div>
+
+    <div id="alertContainer"></div>
+
+    <!-- Tab Navigation -->
+    <div class="tabs">
+      <button class="tab-btn active" data-tab="suppliers">Lieferanten</button>
+      <button class="tab-btn" data-tab="purchase-orders">Bestellungen</button>
+      <button class="tab-btn" data-tab="receipts">Wareneingänge</button>
+      <button class="tab-btn" data-tab="reports">Berichte</button>
+    </div>
+
+    <!-- Suppliers Tab -->
+    <div id="suppliers-tab" class="tab-content active">
+      <div class="card">
+        <h2 class="card-header">Neuer Lieferant</h2>
+        <form id="supplierForm">
+          <div class="form-row">
+            <div class="form-group">
+              <label for="supplierName">Name *</label>
+              <input type="text" id="supplierName" name="name" required>
+            </div>
+            <div class="form-group">
+              <label for="supplierEmail">E-Mail</label>
+              <input type="email" id="supplierEmail" name="email">
+            </div>
+            <div class="form-group">
+              <label for="supplierPhone">Telefon</label>
+              <input type="text" id="supplierPhone" name="phone">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="supplierContact">Ansprechpartner</label>
+              <input type="text" id="supplierContact" name="contact_person">
+            </div>
+            <div class="form-group">
+              <label for="supplierPaymentTerms">Zahlungsziel</label>
+              <select id="supplierPaymentTerms" name="payment_terms">
+                <option value="NET30">30 Tage netto</option>
+                <option value="NET60">60 Tage netto</option>
+                <option value="NET14">14 Tage netto</option>
+                <option value="PREPAID">Vorkasse</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="supplierAddress">Adresse</label>
+            <textarea id="supplierAddress" name="address" rows="2"></textarea>
+          </div>
+          <button type="submit" class="btn btn-primary">Lieferant hinzufügen</button>
+        </form>
+      </div>
+
+      <div class="card">
+        <h2 class="card-header">Lieferantenliste</h2>
+        <div class="filter-row">
+          <input type="text" id="supplierSearch" placeholder="Suchen..." class="search-input">
+          <select id="supplierStatusFilter">
+            <option value="">Alle Status</option>
+            <option value="active">Aktiv</option>
+            <option value="inactive">Inaktiv</option>
+          </select>
+        </div>
+        <div class="table-container">
+          <table>
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>E-Mail</th>
+                <th>Telefon</th>
+                <th>Ansprechpartner</th>
+                <th>Zahlungsziel</th>
+                <th>Status</th>
+                <th>Aktionen</th>
+              </tr>
+            </thead>
+            <tbody id="supplierTableBody">
+              <tr><td colspan="7">Lade Lieferanten...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Purchase Orders Tab -->
+    <div id="purchase-orders-tab" class="tab-content">
+      <div class="card">
+        <h2 class="card-header">Neue Bestellung</h2>
+        <form id="purchaseOrderForm">
+          <div class="form-row">
+            <div class="form-group">
+              <label for="poSupplier">Lieferant *</label>
+              <select id="poSupplier" name="supplier_id" required>
+                <option value="">Lieferant wählen</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="poExpectedDelivery">Erwartete Lieferung</label>
+              <input type="date" id="poExpectedDelivery" name="expected_delivery">
+            </div>
+          </div>
+
+          <h3>Bestellpositionen</h3>
+          <div id="poItemsContainer">
+            <div class="po-item-row">
+              <select class="po-product" required>
+                <option value="">Produkt wählen</option>
+              </select>
+              <input type="number" class="po-quantity" placeholder="Menge" min="1" value="1" required>
+              <input type="number" class="po-price" placeholder="Stückpreis" min="0" step="0.01" required>
+              <span class="po-total">0.00 EUR</span>
+              <button type="button" class="btn btn-danger btn-small remove-item">X</button>
+            </div>
+          </div>
+          <button type="button" id="addPoItem" class="btn btn-secondary">+ Position hinzufügen</button>
+
+          <div class="form-group">
+            <label for="poNotes">Notizen</label>
+            <textarea id="poNotes" name="notes" rows="2"></textarea>
+          </div>
+
+          <div class="po-summary">
+            <strong>Gesamtsumme: <span id="poTotalAmount">0.00</span> EUR</strong>
+          </div>
+
+          <button type="submit" class="btn btn-primary">Bestellung erstellen</button>
+        </form>
+      </div>
+
+      <div class="card">
+        <h2 class="card-header">Bestellungen</h2>
+        <div class="filter-row">
+          <select id="poStatusFilter">
+            <option value="">Alle Status</option>
+            <option value="draft">Entwurf</option>
+            <option value="sent">Gesendet</option>
+            <option value="confirmed">Bestätigt</option>
+            <option value="partially_received">Teillieferung</option>
+            <option value="received">Vollständig</option>
+            <option value="cancelled">Storniert</option>
+          </select>
+          <select id="poSupplierFilter">
+            <option value="">Alle Lieferanten</option>
+          </select>
+        </div>
+        <div class="table-container">
+          <table>
+            <thead>
+              <tr>
+                <th>PO-Nr.</th>
+                <th>Lieferant</th>
+                <th>Datum</th>
+                <th>Erw. Lieferung</th>
+                <th>Betrag</th>
+                <th>Status</th>
+                <th>Aktionen</th>
+              </tr>
+            </thead>
+            <tbody id="poTableBody">
+              <tr><td colspan="7">Lade Bestellungen...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Receipts Tab (GRN) -->
+    <div id="receipts-tab" class="tab-content">
+      <div class="card">
+        <h2 class="card-header">Wareneingang erfassen</h2>
+        <form id="receiptForm">
+          <div class="form-row">
+            <div class="form-group">
+              <label for="receiptPO">Bestellung *</label>
+              <select id="receiptPO" name="purchase_order_id" required>
+                <option value="">Bestellung wählen</option>
+              </select>
+            </div>
+          </div>
+
+          <div id="receiptItemsContainer">
+            <!-- Items will be loaded dynamically -->
+          </div>
+
+          <div class="form-group">
+            <label for="receiptNotes">Qualitätsnotizen</label>
+            <textarea id="receiptNotes" name="quality_notes" rows="2"></textarea>
+          </div>
+
+          <button type="submit" class="btn btn-primary">Wareneingang buchen</button>
+        </form>
+      </div>
+
+      <div class="card">
+        <h2 class="card-header">Wareneingänge (GRN)</h2>
+        <div class="table-container">
+          <table>
+            <thead>
+              <tr>
+                <th>GRN-Nr.</th>
+                <th>PO-Nr.</th>
+                <th>Produkt</th>
+                <th>Menge</th>
+                <th>Qualität</th>
+                <th>Empfangen am</th>
+                <th>Empfangen von</th>
+              </tr>
+            </thead>
+            <tbody id="receiptTableBody">
+              <tr><td colspan="7">Lade Wareneingänge...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Reports Tab -->
+    <div id="reports-tab" class="tab-content">
+      <div class="card">
+        <h2 class="card-header">Lieferantenperformance</h2>
+        <div class="table-container">
+          <table>
+            <thead>
+              <tr>
+                <th>Lieferant</th>
+                <th>Bestellungen</th>
+                <th>Pünktlichkeit</th>
+                <th>Qualität</th>
+                <th>Fehlerrate</th>
+                <th>Umsatz</th>
+              </tr>
+            </thead>
+            <tbody id="performanceTableBody">
+              <tr><td colspan="6">Lade Performance-Daten...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2 class="card-header">Niedrigbestand-Warnungen</h2>
+        <div class="table-container">
+          <table>
+            <thead>
+              <tr>
+                <th>Produkt</th>
+                <th>Kategorie</th>
+                <th>Bestand</th>
+                <th>Mindestbestand</th>
+                <th>Fehlmenge</th>
+                <th>Bevorzugter Lieferant</th>
+                <th>Aktion</th>
+              </tr>
+            </thead>
+            <tbody id="lowStockTableBody">
+              <tr><td colspan="7">Lade Bestandsdaten...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2 class="card-header">Bestellabgleich</h2>
+        <div class="filter-row">
+          <input type="date" id="reconcileFromDate" placeholder="Von">
+          <input type="date" id="reconcileToDate" placeholder="Bis">
+          <button id="loadReconciliation" class="btn btn-secondary">Laden</button>
+        </div>
+        <div class="table-container">
+          <table>
+            <thead>
+              <tr>
+                <th>PO-Nr.</th>
+                <th>Lieferant</th>
+                <th>Bestelldatum</th>
+                <th>Bestellt</th>
+                <th>Erhalten</th>
+                <th>Ausstehend</th>
+                <th>Lieferstatus</th>
+              </tr>
+            </thead>
+            <tbody id="reconciliationTableBody">
+              <tr><td colspan="7">Wählen Sie einen Zeitraum</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Modal for PO Details -->
+  <div id="poModal" class="modal">
+    <div class="modal-content">
+      <span class="modal-close">&times;</span>
+      <h2>Bestelldetails</h2>
+      <div id="poModalContent"></div>
+    </div>
+  </div>
+
+  <!-- Modal for Supplier Edit -->
+  <div id="supplierModal" class="modal">
+    <div class="modal-content">
+      <span class="modal-close">&times;</span>
+      <h2>Lieferant bearbeiten</h2>
+      <form id="editSupplierForm">
+        <input type="hidden" id="editSupplierId">
+        <div class="form-group">
+          <label for="editSupplierName">Name *</label>
+          <input type="text" id="editSupplierName" required>
+        </div>
+        <div class="form-group">
+          <label for="editSupplierEmail">E-Mail</label>
+          <input type="email" id="editSupplierEmail">
+        </div>
+        <div class="form-group">
+          <label for="editSupplierPhone">Telefon</label>
+          <input type="text" id="editSupplierPhone">
+        </div>
+        <div class="form-group">
+          <label for="editSupplierContact">Ansprechpartner</label>
+          <input type="text" id="editSupplierContact">
+        </div>
+        <div class="form-group">
+          <label for="editSupplierPaymentTerms">Zahlungsziel</label>
+          <select id="editSupplierPaymentTerms">
+            <option value="NET30">30 Tage netto</option>
+            <option value="NET60">60 Tage netto</option>
+            <option value="NET14">14 Tage netto</option>
+            <option value="PREPAID">Vorkasse</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="editSupplierStatus">Status</label>
+          <select id="editSupplierStatus">
+            <option value="active">Aktiv</option>
+            <option value="inactive">Inaktiv</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="editSupplierAddress">Adresse</label>
+          <textarea id="editSupplierAddress" rows="2"></textarea>
+        </div>
+        <div class="form-group">
+          <label for="editSupplierNotes">Notizen</label>
+          <textarea id="editSupplierNotes" rows="2"></textarea>
+        </div>
+        <button type="submit" class="btn btn-primary">Speichern</button>
+      </form>
+    </div>
+  </div>
+
+  <script src="js/auth.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/procurement.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', async () => {
+      if (!requireAuth()) return;
+      await auth.fetchCurrentUser();
+      updateUIForRole();
+      setupLogoutButton();
+    });
+  </script>
+</body>
+</html>

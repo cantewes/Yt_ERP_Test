@@ -62,6 +62,10 @@ Target: Functional, locally-runnable system with data persistence and cross-modu
 - Editor: VS Code
 - OS: Windows 11
 - Version Control: Git (recommended)
+- **Development Server: nodemon (REQUIRED)**
+  - Automatische Server-Neustarts bei Code-Aenderungen
+  - Verhindert Zombie-Prozesse und veralteten Code im Speicher
+  - Befehl: `npm run dev` (NICHT `npm start` waehrend Entwicklung)
 
 ---
 
@@ -561,13 +565,28 @@ See `contexts/phases 11-12/Phase-12-spec-FINAL.md` for full quality gates.
 
 ## STARTUP INSTRUCTIONS
 
+### Development (EMPFOHLEN)
 ```
-1. npm install (in backend folder)
-2. npm start
-3. Open http://localhost:3000
-4. Navigate between modules
-5. Login required for protected pages (Phase 11+)
+1. cd backend
+2. npm install
+3. npm run dev     <-- Verwendet nodemon fuer Auto-Reload
+4. Open http://localhost:3000
+5. Bei Code-Aenderungen: Server startet automatisch neu
+6. Zum Beenden: Ctrl+C
 ```
+
+### Production
+```
+1. cd backend
+2. npm install --production
+3. npm start
+4. Open http://localhost:3000
+```
+
+**WICHTIG:** Waehrend der Entwicklung IMMER `npm run dev` verwenden!
+- Verhindert Zombie-Prozesse
+- Automatischer Neustart bei Code-Aenderungen
+- Kein manuelles `taskkill` noetig
 
 ---
 
@@ -581,6 +600,9 @@ See `contexts/phases 11-12/Phase-12-spec-FINAL.md` for full quality gates.
 ### Phase 11 (NEW)
 - bcryptjs (password hashing)
 - uuid or crypto (token generation)
+
+### Dev Dependencies (REQUIRED)
+- nodemon (auto-restart bei Code-Aenderungen)
 
 ---
 

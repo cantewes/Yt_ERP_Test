@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ERP System - Email-Bestellungen</title>
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 1rem;
+      margin-bottom: 2rem;
+    }
+    .stat-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1rem;
+      text-align: center;
+    }
+    .stat-card h4 {
+      margin: 0 0 0.5rem 0;
+      font-size: 0.9rem;
+      color: #666;
+    }
+    .stat-card .value {
+      font-size: 1.5rem;
+      font-weight: bold;
+    }
+    .confidence-bar {
+      width: 100%;
+      height: 8px;
+      background: #e0e0e0;
+      border-radius: 4px;
+      overflow: hidden;
+    }
+    .confidence-fill {
+      height: 100%;
+      transition: width 0.3s;
+    }
+    .confidence-high { background: #28a745; }
+    .confidence-medium { background: #ffc107; }
+    .confidence-low { background: #dc3545; }
+    .tabs {
+      display: flex;
+      border-bottom: 2px solid var(--border);
+      margin-bottom: 1rem;
+    }
+    .tab {
+      padding: 0.75rem 1.5rem;
+      cursor: pointer;
+      border: none;
+      background: none;
+      font-size: 1rem;
+      border-bottom: 2px solid transparent;
+      margin-bottom: -2px;
+    }
+    .tab.active {
+      border-bottom-color: var(--primary);
+      color: var(--primary);
+      font-weight: 600;
+    }
+    .tab-content {
+      display: none;
+    }
+    .tab-content.active {
+      display: block;
+    }
+    .email-preview {
+      max-height: 100px;
+      overflow: hidden;
+      font-size: 0.85rem;
+      color: #666;
+      white-space: pre-wrap;
+    }
+    .duplicate-warning {
+      background: #fff3cd;
+      border: 1px solid #ffc107;
+      border-radius: 4px;
+      padding: 0.5rem;
+      margin-bottom: 0.5rem;
+      font-size: 0.9rem;
+    }
+    .config-section {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1.5rem;
+      margin-bottom: 1rem;
+    }
+    .config-section h3 {
+      margin-top: 0;
+    }
+    .config-form {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1rem;
+    }
+    .test-area {
+      background: #f8f9fa;
+      border-radius: 8px;
+      padding: 1rem;
+      margin-top: 1rem;
+    }
+  </style>
+</head>
+<body>
+  <nav class="nav">
+    <div class="nav-container">
+      <a href="index.html" class="nav-logo">ERP System</a>
+      <ul class="nav-links">
+        <li><a href="inventory.html">Inventar</a></li>
+        <li><a href="hr.html">Personal</a></li>
+        <li><a href="sales.html">Vertrieb</a></li>
+        <li><a href="procurement.html">Beschaffung</a></li>
+        <li><a href="analytics.html">Analytics</a></li>
+        <li><a href="accounting.html">Buchhaltung</a></li>
+        <li><a href="email-orders.html" class="active">Email-Orders</a></li>
+      </ul>
+      <div class="nav-user">
+        <span id="current-username"></span>
+        <span id="current-role" class="role-badge"></span>
+        <button id="logout-btn" class="btn btn-small">Abmelden</button>
+      </div>
+    </div>
+  </nav>
+
+  <main class="container">
+    <h1>Email-Bestellungen</h1>
+
+    <div id="alert-container"></div>
+
+    <!-- Statistics -->
+    <section class="stats-grid" id="stats-section">
+      <div class="stat-card">
+        <h4>Ausstehend</h4>
+        <p class="value" id="stat-pending">-</p>
+      </div>
+      <div class="stat-card">
+        <h4>Auto-Genehmigt (heute)</h4>
+        <p class="value" id="stat-auto-approved">-</p>
+      </div>
+      <div class="stat-card">
+        <h4>Manuell Genehmigt</h4>
+        <p class="value" id="stat-approved">-</p>
+      </div>
+      <div class="stat-card">
+        <h4>Duplikate</h4>
+        <p class="value" id="stat-duplicates">-</p>
+      </div>
+      <div class="stat-card">
+        <h4>Fehler (7 Tage)</h4>
+        <p class="value" id="stat-errors">-</p>
+      </div>
+      <div class="stat-card">
+        <h4>Avg. Confidence</h4>
+        <p class="value" id="stat-avg-confidence">-</p>
+      </div>
+    </section>
+
+    <!-- Tabs -->
+    <div class="tabs">
+      <button class="tab active" data-tab="pending">Ausstehende Bestellungen</button>
+      <button class="tab" data-tab="auto-approved">Auto-Genehmigt</button>
+      <button class="tab" data-tab="errors">Parsing-Fehler</button>
+      <button class="tab" data-tab="test">Test & Simulation</button>
+      <button class="tab" data-tab="config">Konfiguration</button>
+    </div>
+
+    <!-- Pending Orders Tab -->
+    <div class="tab-content active" id="tab-pending">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Email</th>
+            <th>Produkt</th>
+            <th>Menge</th>
+            <th>Confidence</th>
+            <th>Gesendet</th>
+            <th>Status</th>
+            <th>Aktionen</th>
+          </tr>
+        </thead>
+        <tbody id="pending-table">
+          <tr><td colspan="7" class="loading">Laden...</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Auto-Approved Tab -->
+    <div class="tab-content" id="tab-auto-approved">
+      <div class="summary-card" style="margin-bottom: 1rem;">
+        <p><strong id="auto-approved-summary">0 Bestellungen heute automatisch genehmigt</strong></p>
+      </div>
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Email</th>
+            <th>Produkt</th>
+            <th>Menge</th>
+            <th>Confidence</th>
+            <th>Genehmigt am</th>
+          </tr>
+        </thead>
+        <tbody id="auto-approved-table">
+          <tr><td colspan="5" class="loading">Laden...</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Errors Tab -->
+    <div class="tab-content" id="tab-errors">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Email</th>
+            <th>Fehlertyp</th>
+            <th>Nachricht</th>
+            <th>Versuche</th>
+            <th>Erstellt</th>
+            <th>Aktionen</th>
+          </tr>
+        </thead>
+        <tbody id="errors-table">
+          <tr><td colspan="6" class="loading">Laden...</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Test Tab -->
+    <div class="tab-content" id="tab-test">
+      <div class="config-section">
+        <h3>Email-Parsing testen</h3>
+        <p>Testen Sie die Email-Parsing-Logik ohne echte Emails zu senden.</p>
+        <div class="form-group">
+          <label for="test-email-body">Email-Inhalt</label>
+          <textarea id="test-email-body" rows="5" placeholder="z.B.: Ich moechte 2 HP Laptop bestellen."></textarea>
+        </div>
+        <button class="btn btn-primary" onclick="testParsing()">Parsing testen</button>
+        <div class="test-area" id="parse-result" style="display: none;">
+          <h4>Ergebnis:</h4>
+          <pre id="parse-result-text"></pre>
+        </div>
+      </div>
+
+      <div class="config-section">
+        <h3>Email-Bestellung simulieren</h3>
+        <p>Simulieren Sie eine eingehende Email-Bestellung (erstellt Eintrag in der Datenbank).</p>
+        <div class="config-form">
+          <div class="form-group">
+            <label for="sim-email">Absender-Email</label>
+            <input type="email" id="sim-email" placeholder="kunde@example.com">
+          </div>
+          <div class="form-group">
+            <label for="sim-subject">Betreff</label>
+            <input type="text" id="sim-subject" placeholder="Bestellung">
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="sim-body">Email-Inhalt</label>
+          <textarea id="sim-body" rows="4" placeholder="Ich moechte 3 Dell Monitor bestellen."></textarea>
+        </div>
+        <button class="btn btn-primary" onclick="simulateEmail()">Bestellung simulieren</button>
+        <div class="test-area" id="simulate-result" style="display: none;">
+          <h4>Ergebnis:</h4>
+          <pre id="simulate-result-text"></pre>
+        </div>
+      </div>
+    </div>
+
+    <!-- Config Tab -->
+    <div class="tab-content" id="tab-config">
+      <div class="config-section">
+        <h3>Email-Service Status</h3>
+        <div id="service-status">
+          <p>IMAP: <span id="imap-status" class="badge">-</span></p>
+          <p>SMTP: <span id="smtp-status" class="badge">-</span></p>
+          <p>Polling: <span id="polling-status" class="badge">-</span></p>
+        </div>
+        <div style="margin-top: 1rem;">
+          <button class="btn btn-primary" id="start-polling-btn" onclick="startPolling()">Polling starten</button>
+          <button class="btn btn-secondary" id="stop-polling-btn" onclick="stopPolling()">Polling stoppen</button>
+          <button class="btn btn-secondary" onclick="triggerPoll()">Manuell abfragen</button>
+        </div>
+      </div>
+
+      <div class="config-section">
+        <h3>IMAP Konfiguration (Eingehende Emails)</h3>
+        <div class="config-form">
+          <div class="form-group">
+            <label for="imap-host">Host</label>
+            <input type="text" id="imap-host" placeholder="imap.example.com">
+          </div>
+          <div class="form-group">
+            <label for="imap-port">Port</label>
+            <input type="number" id="imap-port" value="993">
+          </div>
+          <div class="form-group">
+            <label for="imap-user">Benutzer</label>
+            <input type="text" id="imap-user" placeholder="orders@example.com">
+          </div>
+          <div class="form-group">
+            <label for="imap-password">Passwort</label>
+            <input type="password" id="imap-password">
+          </div>
+        </div>
+        <div style="margin-top: 1rem;">
+          <button class="btn btn-primary" onclick="saveImapConfig()">IMAP speichern</button>
+          <button class="btn btn-secondary" onclick="testImap()">Verbindung testen</button>
+        </div>
+      </div>
+
+      <div class="config-section">
+        <h3>SMTP Konfiguration (Ausgehende Emails)</h3>
+        <div class="config-form">
+          <div class="form-group">
+            <label for="smtp-host">Host</label>
+            <input type="text" id="smtp-host" placeholder="smtp.example.com">
+          </div>
+          <div class="form-group">
+            <label for="smtp-port">Port</label>
+            <input type="number" id="smtp-port" value="587">
+          </div>
+          <div class="form-group">
+            <label for="smtp-user">Benutzer</label>
+            <input type="text" id="smtp-user" placeholder="orders@example.com">
+          </div>
+          <div class="form-group">
+            <label for="smtp-password">Passwort</label>
+            <input type="password" id="smtp-password">
+          </div>
+        </div>
+        <div style="margin-top: 1rem;">
+          <button class="btn btn-primary" onclick="saveSmtpConfig()">SMTP speichern</button>
+          <button class="btn btn-secondary" onclick="testSmtp()">Verbindung testen</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Approve Modal -->
+    <div id="approve-modal" class="modal hidden">
+      <div class="modal-content">
+        <span class="modal-close">&times;</span>
+        <h2>Bestellung genehmigen</h2>
+        <input type="hidden" id="approve-order-id">
+        <div class="form-group">
+          <label>Email: <strong id="approve-email"></strong></label>
+        </div>
+        <div class="form-group">
+          <label>Produkt: <strong id="approve-product"></strong></label>
+        </div>
+        <div class="form-group">
+          <label>Menge: <strong id="approve-quantity"></strong></label>
+        </div>
+        <div class="form-group">
+          <label for="approve-notes">Admin-Notizen</label>
+          <textarea id="approve-notes" rows="3"></textarea>
+        </div>
+        <button class="btn btn-primary" onclick="confirmApprove()">Genehmigen</button>
+      </div>
+    </div>
+
+    <!-- Reject Modal -->
+    <div id="reject-modal" class="modal hidden">
+      <div class="modal-content">
+        <span class="modal-close">&times;</span>
+        <h2>Bestellung ablehnen</h2>
+        <input type="hidden" id="reject-order-id">
+        <div class="form-group">
+          <label for="reject-reason">Grund</label>
+          <textarea id="reject-reason" rows="3" placeholder="Grund fuer die Ablehnung..."></textarea>
+        </div>
+        <div class="form-group">
+          <label>
+            <input type="checkbox" id="reject-send-email" checked>
+            Ablehnungs-Email an Kunden senden
+          </label>
+        </div>
+        <button class="btn btn-danger" onclick="confirmReject()">Ablehnen</button>
+      </div>
+    </div>
+
+  </main>
+
+  <script src="js/auth.js"></script>
+  <script src="js/api.js"></script>
+  <script>
+    // Check auth and role before loading email orders
+    document.addEventListener('DOMContentLoaded', async () => {
+      if (!requireAuth()) return;
+      await auth.fetchCurrentUser();
+
+      // Check if user is admin or manager
+      if (!auth.hasRole('admin', 'manager')) {
+        document.querySelector('main.container').innerHTML = `
+          <div class="alert alert-error">
+            Zugriff verweigert. Sie benoetigen Admin- oder Manager-Rechte.
+          </div>
+        `;
+        return;
+      }
+
+      updateUIForRole();
+      setupLogoutButton();
+    });
+  </script>
+  <script src="js/emailOrders.js"></script>
+</body>
+</html>

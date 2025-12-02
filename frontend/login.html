@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ERP System - Login</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <main class="container auth-container">
+    <div class="auth-card">
+      <h1>ERP System</h1>
+      <h2>Anmeldung</h2>
+
+      <div id="alert-container"></div>
+
+      <form id="login-form">
+        <div class="form-group">
+          <label for="username">Benutzername</label>
+          <input type="text" id="username" name="username" required autocomplete="username" autofocus>
+        </div>
+
+        <div class="form-group">
+          <label for="password">Passwort</label>
+          <input type="password" id="password" name="password" required autocomplete="current-password">
+        </div>
+
+        <button type="submit" class="btn btn-primary btn-block" id="login-btn">
+          Anmelden
+        </button>
+      </form>
+
+      <div class="auth-links">
+        <a href="reset-password-request.html">Passwort vergessen?</a>
+      </div>
+
+      <div class="auth-info">
+        <p>Demo-Zugangsdaten:</p>
+        <p><strong>Benutzer:</strong> admin</p>
+        <p><strong>Passwort:</strong> Admin123!</p>
+      </div>
+    </div>
+  </main>
+
+  <script src="js/auth.js"></script>
+  <script src="js/api.js"></script>
+  <script>
+    // Check if we came from a 401 redirect (URL has ?expired param)
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.has('expired')) {
+      // Clear any stale auth data
+      auth.clearAuth();
+    }
+
+    // Only redirect if logged in AND token is valid (not expired)
+    // We'll verify by making a quick API call
+    (async function() {
+      if (auth.isLoggedIn()) {
+        try {
+          const result = await auth.fetchCurrentUser();
+          if (result) {
+            // Token is valid, redirect to home
+            window.location.href = '/index.html';
+          } else {
+            // Token is invalid, clear it
+            auth.clearAuth();
+          }
+        } catch (e) {
+          // Error checking token, clear it
+          auth.clearAuth();
+        }
+      }
+    })();
+
+    const form = document.getElementById('login-form');
+    const alertContainer = document.getElementById('alert-container');
+    const loginBtn = document.getElementById('login-btn');
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const username = document.getElementById('username').value.trim();
+      const password = document.getElementById('password').value;
+
+      if (!username || !password) {
+        showAlert(alertContainer, 'Bitte alle Felder ausfuellen', 'error');
+        return;
+      }
+
+      loginBtn.disabled = true;
+      loginBtn.textContent = 'Anmelden...';
+
+      try {
+        const result = await auth.login(username, password);
+
+        if (result.success) {
+          showAlert(alertContainer, 'Anmeldung erfolgreich!', 'success');
+          setTimeout(() => {
+            window.location.href = '/index.html';
+          }, 500);
+        } else {
+          let errorMsg = result.error || 'Anmeldung fehlgeschlagen';
+          if (result.attempts_remaining !== undefined) {
+            errorMsg += ` (${result.attempts_remaining} Versuche verbleibend)`;
+          }
+          showAlert(alertContainer, errorMsg, 'error');
+          loginBtn.disabled = false;
+          loginBtn.textContent = 'Anmelden';
+        }
+      } catch (err) {
+        showAlert(alertContainer, 'Verbindungsfehler. Bitte versuchen Sie es erneut.', 'error');
+        loginBtn.disabled = false;
+        loginBtn.textContent = 'Anmelden';
+      }
+    });
+  </script>
+</body>
+</html>

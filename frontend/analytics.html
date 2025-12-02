@@ -15,8 +15,15 @@
         <li><a href="inventory.html">Inventar</a></li>
         <li><a href="hr.html">Personal</a></li>
         <li><a href="sales.html">Vertrieb</a></li>
+        <li><a href="procurement.html">Beschaffung</a></li>
         <li><a href="analytics.html" class="active">Analytics</a></li>
+        <li><a href="accounting.html">Buchhaltung</a></li>
       </ul>
+      <div class="nav-user">
+        <span id="current-username"></span>
+        <span id="current-role" class="role-badge"></span>
+        <button id="logout-btn" class="btn btn-small">Abmelden</button>
+      </div>
     </div>
   </nav>
 
@@ -172,7 +179,16 @@
     </div>
   </main>
 
+  <script src="js/auth.js"></script>
   <script src="js/api.js"></script>
   <script src="js/analytics.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', async () => {
+      if (!requireAuth()) return;
+      await auth.fetchCurrentUser();
+      updateUIForRole();
+      setupLogoutButton();
+    });
+  </script>
 </body>
 </html>

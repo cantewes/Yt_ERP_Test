@@ -4,6 +4,13 @@ const productForm = document.getElementById('productForm');
 const productTableBody = document.getElementById('productTableBody');
 const alertContainer = document.getElementById('alertContainer');
 
+function formatCurrency(amount) {
+  return new Intl.NumberFormat('de-DE', {
+    style: 'currency',
+    currency: 'EUR'
+  }).format(amount || 0);
+}
+
 async function loadProducts() {
   const result = await api.get('/products');
   if (result.success) {
@@ -16,7 +23,7 @@ async function loadProducts() {
 
 function renderProducts() {
   if (products.length === 0) {
-    productTableBody.innerHTML = '<tr><td colspan="5">Keine Produkte vorhanden</td></tr>';
+    productTableBody.innerHTML = '<tr><td colspan="6">Keine Produkte vorhanden</td></tr>';
     return;
   }
 
@@ -29,6 +36,11 @@ function renderProducts() {
         <input type="number" value="${product.quantity}" min="0"
                onchange="updateQuantity(${product.id}, this.value)"
                style="width: 80px; padding: 4px;">
+      </td>
+      <td>
+        <input type="number" value="${product.price || 0}" min="0" step="0.01"
+               onchange="updatePrice(${product.id}, this.value)"
+               style="width: 100px; padding: 4px;">
       </td>
       <td class="action-buttons">
         <button class="btn btn-danger btn-small" onclick="deleteProduct(${product.id})">Löschen</button>
@@ -43,13 +55,14 @@ productForm.addEventListener('submit', async (e) => {
   const name = document.getElementById('productName').value.trim();
   const category = document.getElementById('productCategory').value;
   const quantity = parseInt(document.getElementById('productQuantity').value, 10);
+  const price = parseFloat(document.getElementById('productPrice').value) || 0;
 
   if (!name || !category) {
     showAlert(alertContainer, 'Bitte alle Felder ausfüllen');
     return;
   }
 
-  const result = await api.post('/products', { name, category, quantity });
+  const result = await api.post('/products', { name, category, quantity, price });
 
   if (result.success) {
     showAlert(alertContainer, 'Produkt hinzugefügt', 'success');
@@ -71,6 +84,24 @@ async function updateQuantity(id, value) {
   const result = await api.put(`/products/${id}`, { quantity });
   if (result.success) {
     showAlert(alertContainer, 'Menge aktualisiert', 'success');
+    await loadProducts();
+  } else {
+    showAlert(alertContainer, result.message || 'Fehler beim Aktualisieren');
+    await loadProducts();
+  }
+}
+
+async function updatePrice(id, value) {
+  const price = parseFloat(value);
+  if (isNaN(price) || price < 0) {
+    showAlert(alertContainer, 'Ungültiger Preis');
+    await loadProducts();
+    return;
+  }
+
+  const result = await api.put(`/products/${id}`, { price });
+  if (result.success) {
+    showAlert(alertContainer, 'Preis aktualisiert', 'success');
     await loadProducts();
   } else {
     showAlert(alertContainer, result.message || 'Fehler beim Aktualisieren');
